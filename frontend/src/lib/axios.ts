@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAccessToken, getRefreshToken, setTokens, clearAuthStorage } from '@/lib/token-storage';
 
 // Axios 인스턴스 생성 및 기본 설정
 export const apiClient = axios.create({
@@ -16,6 +17,12 @@ export const apiClient = axios.create({
 // 요청 인터셉터 - 요청 전 공통 처리
 apiClient.interceptors.request.use(
   (config) => {
+    // 로컬 인증 토큰을 우선적으로 Authorization 헤더에 부착
+    const accessToken = getAccessToken();
+    if (accessToken) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
     // 요청 로깅 (개발 환경에서만)
     if (process.env.NODE_ENV === 'development') {
       console.log('API 요청:', config.method?.toUpperCase(), config.url);
@@ -37,7 +44,7 @@ apiClient.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
     // 에러 상태별 처리
     const status = error.response?.status;
     const message = error.response?.data?.message || error.message;
@@ -45,7 +52,28 @@ apiClient.interceptors.response.use(
     switch (status) {
       case 401:
         console.error('인증 에러: 로그인이 필요합니다');
-        // 필요시 로그인 페이지로 리다이렉트 로직 추가
+        // 액세스 토큰 만료 시 자동 갱신 시도
+        try {
+          const refreshToken = getRefreshToken();
+          if (refreshToken && !error.config._retry) {
+            error.config._retry = true;
+            const refreshResponse = await axios.post(
+              `${apiClient.defaults.baseURL || ''}/api/auth/refresh`,
+              {},
+              { headers: { Authorization: `Bearer ${refreshToken}` } }
+            );
+            const newAccess = refreshResponse.data?.data?.accessToken;
+            const newRefresh = refreshResponse.data?.data?.refreshToken || refreshToken;
+            if (newAccess) {
+              setTokens({ accessToken: newAccess, refreshToken: newRefresh });
+              error.config.headers = error.config.headers || {};
+              error.config.headers.Authorization = `Bearer ${newAccess}`;
+              return apiClient.request(error.config);
+            }
+          }
+        } catch (refreshErr) {
+          clearAuthStorage();
+        }
         break;
       case 403:
         console.error('권한 에러: 접근 권한이 없습니다');

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Menu, User, Bell, X } from 'lucide-react';
+import { Menu, Bell, X, LogOut, LogIn } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +15,10 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Sidebar } from './sidebar';
+import Link from 'next/link';
+import { signOut } from '@/lib/api/auth-api';
+import { useAuth } from '@/hooks/use-auth';
+import { AppUser } from '@/types/user';
 
 interface HeaderProps {
   onMobileMenuClick?: () => void;
@@ -22,6 +26,8 @@ interface HeaderProps {
 
 // 헤더 컴포넌트
 export function Header({ onMobileMenuClick: _onMobileMenuClick }: HeaderProps) {
+  // 인증 상태 훅
+  const { currentUser, isAuthenticated, localSignOut } = useAuth<AppUser>();
   // 알림 관련 상태
   const [notifications] = useState([
     {
@@ -179,14 +185,36 @@ export function Header({ onMobileMenuClick: _onMobileMenuClick }: HeaderProps) {
 
           {/* 사용자 메뉴 */}
           <div className="flex items-center gap-2">
-            <div className="hidden md:block text-right">
-              <p className="text-sm font-medium">사용자명</p>
-              <p className="text-xs text-muted-foreground">user@example.com</p>
-            </div>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5" />
-              <span className="sr-only">사용자 메뉴</span>
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <div className="hidden md:block text-right">
+                  <p className="text-sm font-medium">{currentUser?.name || '사용자'}</p>
+                  <p className="text-xs text-muted-foreground">{currentUser?.email || ''}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full"
+                  onClick={async () => {
+                    try {
+                      await signOut();
+                    } finally {
+                      localSignOut();
+                    }
+                  }}
+                  title="로그아웃"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="sr-only">로그아웃</span>
+                </Button>
+              </>
+            ) : (
+              <Link href="/login">
+                <Button variant="default" size="sm" className="gap-1">
+                  <LogIn className="h-4 w-4" /> 로그인
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

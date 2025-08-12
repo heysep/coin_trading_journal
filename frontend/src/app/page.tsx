@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useAuth } from '@/hooks/use-auth';
 import {
   TrendingUp,
   Plus,
@@ -189,6 +190,8 @@ function RecentTradesSummary() {
 }
 
 export default function Dashboard() {
+  // 로그인 상태에 따라 상단 안내 표시
+  const { isAuthenticated } = useAuth();
   const { data: tradesData } = useRecentTrades();
 
   // 간단한 통계 계산
@@ -227,6 +230,11 @@ export default function Dashboard() {
                 <Clock className="h-3 w-3" />
                 실시간 업데이트
               </Badge>
+              {!isAuthenticated && (
+                <Link href="/login">
+                  <Badge className="gap-1">로그인 필요</Badge>
+                </Link>
+              )}
             </div>
           </div>
         </div>
