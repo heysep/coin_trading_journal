@@ -30,3 +30,6 @@ trading-engine/.venv/
 trading-engine/venv/
 trading-engine/__pycache__/
 trading-engine/**/*.py[cod]
+# root gradle/build caches
+.gradle/
+build/
