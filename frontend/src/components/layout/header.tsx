@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Menu, User, Bell, X } from 'lucide-react';
+import { Menu, User, Bell, X, LogIn, LogOut } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +15,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Sidebar } from './sidebar';
+import Link from 'next/link';
+import { useAuth } from '@/components/providers/auth-provider';
 
 interface HeaderProps {
   onMobileMenuClick?: () => void;
@@ -22,6 +24,8 @@ interface HeaderProps {
 
 // 헤더 컴포넌트
 export function Header({ onMobileMenuClick: _onMobileMenuClick }: HeaderProps) {
+  // 인증 상태
+  const { user, logout } = useAuth();
   // 알림 관련 상태
   const [notifications] = useState([
     {
@@ -177,17 +181,32 @@ export function Header({ onMobileMenuClick: _onMobileMenuClick }: HeaderProps) {
           {/* 다크 모드 토글 */}
           <ThemeToggle />
 
-          {/* 사용자 메뉴 */}
-          <div className="flex items-center gap-2">
-            <div className="hidden md:block text-right">
-              <p className="text-sm font-medium">사용자명</p>
-              <p className="text-xs text-muted-foreground">user@example.com</p>
+          {/* 사용자/로그인 메뉴 */}
+          {user ? (
+            <div className="flex items-center gap-2">
+              <div className="hidden md:block text-right">
+                <p className="text-sm font-medium">{user.name}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              </div>
+              <Button variant="ghost" size="icon" className="rounded-full" onClick={logout}>
+                <LogOut className="h-5 w-5" />
+                <span className="sr-only">로그아웃</span>
+              </Button>
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5" />
-              <span className="sr-only">사용자 메뉴</span>
-            </Button>
-          </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link href="/login">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <LogIn className="h-4 w-4" /> 로그인
+                </Button>
+              </Link>
+              <Link href="/register" className="hidden sm:block">
+                <Button size="sm" className="gap-2">
+                  <User className="h-4 w-4" /> 회원가입
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>

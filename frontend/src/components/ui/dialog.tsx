@@ -10,8 +10,9 @@ const Dialog = DialogPrimitive.Root;
 
 const DialogTrigger = DialogPrimitive.Trigger;
 
-const DialogPortal = ({ className, ...props }: DialogPrimitive.DialogPortalProps) => (
-  <DialogPrimitive.Portal className={cn(className)} {...props} />
+// Radix Dialog.Portal은 className을 받지 않으므로 children만 전달
+const DialogPortal = ({ children }: { children?: React.ReactNode }) => (
+  <DialogPrimitive.Portal>{children}</DialogPrimitive.Portal>
 );
 DialogPortal.displayName = DialogPrimitive.Portal.displayName;
 

@@ -25,7 +25,7 @@ export class ForbiddenRulesChecker {
       violations.push(
         this.createViolation('no_stoploss', {
           trade_id: newTrade.id,
-          stop_loss: newTrade.stop_loss,
+          stopLoss: newTrade.stopLoss,
         })
       );
     }
@@ -35,9 +35,9 @@ export class ForbiddenRulesChecker {
       violations.push(
         this.createViolation('oversized_position', {
           trade_id: newTrade.id,
-          position_size: newTrade.quantity * newTrade.entry_price,
+          position_size: newTrade.quantity * newTrade.entryPrice,
           account_equity: accountEquity,
-          ratio: (newTrade.quantity * newTrade.entry_price) / accountEquity,
+          ratio: (newTrade.quantity * newTrade.entryPrice) / accountEquity,
         })
       );
     }
@@ -48,9 +48,9 @@ export class ForbiddenRulesChecker {
         this.createViolation('revenge_trade', {
           trade_id: newTrade.id,
           last_loss_trade: allTrades
-            .filter((t) => t.exit_price && this.calculatePnL(t) < 0)
+            .filter((t) => t.exitPrice && this.calculatePnL(t) < 0)
             .sort(
-              (a, b) => new Date(b.exit_time || 0).getTime() - new Date(a.exit_time || 0).getTime()
+              (a, b) => new Date(b.exitTime || 0).getTime() - new Date(a.exitTime || 0).getTime()
             )[0]?.id,
         })
       );
@@ -61,7 +61,7 @@ export class ForbiddenRulesChecker {
       violations.push(
         this.createViolation('chasing', {
           trade_id: newTrade.id,
-          entry_price: newTrade.entry_price,
+          entry_price: newTrade.entryPrice,
         })
       );
     }
@@ -71,7 +71,7 @@ export class ForbiddenRulesChecker {
       violations.push(
         this.createViolation('overtrading', {
           trade_id: newTrade.id,
-          daily_trade_count: this.getDailyTradeCount(newTrade.entry_time, allTrades),
+          daily_trade_count: this.getDailyTradeCount(newTrade.entryTime, allTrades),
         })
       );
     }
@@ -225,8 +225,14 @@ export class ForbiddenRulesChecker {
    * 위반 객체 생성
    */
   private static createViolation(
-    ruleCode: string,
-    details: Record<string, any>
+    ruleCode: keyof typeof FORBIDDEN_RULES,
+    details:
+      | { trade_id: string | number; stopLoss?: number | undefined }
+      | { trade_id: string | number; position_size: number; account_equity: number; ratio: number }
+      | { trade_id: string | number; last_loss_trade?: string | number | undefined }
+      | { trade_id: string | number; entry_price: number }
+      | { trade_id: string | number; daily_trade_count: number }
+      | { trade_id: string | number; symbol: string }
   ): ForbiddenRuleViolation {
     const rule = FORBIDDEN_RULES[ruleCode];
     return {

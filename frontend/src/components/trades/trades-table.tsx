@@ -454,13 +454,8 @@ export function TradesTable({ selectedMonth }: TradesTableProps) {
                           <span>
                             {c.description} ({Math.round(c.weight * 100)}%)
                           </span>
-                          <span
-                            className={cn(
-                              'font-medium',
-                              c.passed ? 'text-green-600' : 'text-red-600'
-                            )}
-                          >
-                            {c.passed ? `+${Math.round(c.weight * 100)}` : '+0'}
+                          <span className={cn('font-medium', c.ratio > 0 ? 'text-green-600' : 'text-red-600')}>
+                            {c.ratio > 0 ? `+${Math.round(c.weight * 100)}` : '+0'}
                           </span>
                         </div>
                       ))}
