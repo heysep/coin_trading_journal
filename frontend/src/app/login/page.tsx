@@ -48,7 +48,7 @@ export default function LoginPage() {
         <h1 className="text-xl font-semibold mb-1">로그인</h1>
         <p className="text-sm text-muted-foreground mb-6">이메일과 비밀번호를 입력하세요</p>
 
-        {/* Google / Apple SDK 로딩 */}
+        {/* Google GSI(FedCM) + Apple JS SDK */}
         <Script
           id="google-identity"
           src="https://accounts.google.com/gsi/client"
@@ -114,44 +114,57 @@ export default function LoginPage() {
           disabled={googleLoading}
           onClick={async () => {
             try {
-              const g = (window as any).google;
-              if (!g?.accounts?.id) throw new Error('Google SDK 로드 실패');
               const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
               if (!clientId) throw new Error('환경변수 NEXT_PUBLIC_GOOGLE_CLIENT_ID 가 설정되지 않았습니다');
-
               setGoogleLoading(true);
-              g.accounts.id.initialize({
-                client_id: clientId,
-                // FedCM 임시 비활성화 (환경 이슈 최소화)
-                use_fedcm_for_prompt: false,
-                auto_select: false,
-                context: 'signin',
-                itp_support: true,
-                callback: async (resp: any) => {
-                  try {
-                    if (resp?.credential) {
-                      await oauth2Login('GOOGLE', resp.credential);
-                      router.replace('/');
-                    } else {
-                      form.setError('root', { type: 'server', message: 'Google 로그인에 실패했습니다' });
+
+              const origin = typeof window !== 'undefined' ? window.location.origin : '';
+              const redirectUri = `${origin}/auth/google/callback`;
+
+              const redirectAuth = () => {
+                const qs = new URLSearchParams({
+                  client_id: clientId,
+                  redirect_uri: redirectUri,
+                  response_type: 'code',
+                  scope: 'openid email profile',
+                  include_granted_scopes: 'true',
+                  prompt: 'consent',
+                  access_type: 'offline',
+                });
+                window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${qs.toString()}`;
+              };
+
+              const g = (window as any).google;
+              if (g?.accounts?.id) {
+                g.accounts.id.initialize({
+                  client_id: clientId,
+                  context: 'signin',
+                  auto_select: false,
+                  callback: async (resp: any) => {
+                    try {
+                      if (resp?.credential) {
+                        await oauth2Login('GOOGLE', resp.credential);
+                        router.replace('/');
+                        return;
+                      }
+                      redirectAuth();
+                    } finally {
+                      setGoogleLoading(false);
                     }
-                  } finally {
-                    setGoogleLoading(false);
+                  },
+                });
+                g.accounts.id.prompt((notification: any) => {
+                  if (
+                    notification?.isNotDisplayed?.() ||
+                    notification?.isSkippedMoment?.() ||
+                    notification?.isDismissedMoment?.()
+                  ) {
+                    redirectAuth();
                   }
-                },
-              });
-              // 프롬프트 상태 콜백: 표시 안됨/건너뜀/닫힘 등 모든 케이스에서 로딩 해제
-              g.accounts.id.prompt((notification: any) => {
-                if (notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.() || notification?.isDismissedMoment?.()) {
-                  const reason =
-                    notification?.getNotDisplayedReason?.() ||
-                    notification?.getSkippedReason?.() ||
-                    notification?.getDismissedReason?.() ||
-                    '알 수 없는 이유로 로그인 창을 표시하지 못했습니다';
-                  form.setError('root', { type: 'server', message: `Google 로그인 실패: ${reason}` });
-                  setGoogleLoading(false);
-                }
-              });
+                });
+              } else {
+                redirectAuth();
+              }
             } catch (e: any) {
               form.setError('root', { type: 'server', message: e?.message || 'Google 로그인 실패' });
             } finally {

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Menu, User, Bell, X, LogIn, LogOut } from 'lucide-react';
+import Image from 'next/image';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import {
@@ -188,6 +189,19 @@ export function Header({ onMobileMenuClick: _onMobileMenuClick }: HeaderProps) {
                 <p className="text-sm font-medium">{user.name}</p>
                 <p className="text-xs text-muted-foreground">{user.email}</p>
               </div>
+              {user.profileImageUrl ? (
+                <Image
+                  src={user.profileImageUrl}
+                  alt="프로필 이미지"
+                  width={32}
+                  height={32}
+                  className="rounded-full border"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
               <Button variant="ghost" size="icon" className="rounded-full" onClick={logout}>
                 <LogOut className="h-5 w-5" />
                 <span className="sr-only">로그아웃</span>
