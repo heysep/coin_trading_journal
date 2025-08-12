@@ -43,6 +43,12 @@ export interface RegisterRequest {
   name: string;
 }
 
+// OAuth2 로그인 요청 DTO
+export interface OAuth2LoginRequest {
+  token: string; // Google/Apple에서 받은 ID 토큰
+  providerType: 'GOOGLE' | 'APPLE';
+}
+
 export const authApi = {
   // 로그인 API 호출
   async login(payload: LoginRequest): Promise<LoginResponse> {
@@ -56,6 +62,20 @@ export const authApi = {
       // 한글 메시지 우선 처리
       const message = (error as any)?.response?.data?.message || (error as Error).message;
       throw new Error(message || '로그인에 실패했습니다');
+    }
+  },
+
+  // OAuth2 로그인 (Google/Apple)
+  async oauth2Login(payload: OAuth2LoginRequest): Promise<LoginResponse> {
+    try {
+      const res = await apiClient.post<ApiResponse<LoginResponse>>('/api/oauth2/login', payload);
+      if (!res.data.success || !res.data.data) {
+        throw new Error(res.data.message || '소셜 로그인에 실패했습니다');
+      }
+      return res.data.data;
+    } catch (error) {
+      const message = (error as any)?.response?.data?.message || (error as Error).message;
+      throw new Error(message || '소셜 로그인에 실패했습니다');
     }
   },
 

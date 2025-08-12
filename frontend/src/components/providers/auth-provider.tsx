@@ -13,6 +13,7 @@ type AuthContextValue = {
   login: (payload: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+  oauth2Login: (provider: 'GOOGLE' | 'APPLE', idToken: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -87,6 +88,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     toast.success('로그인 되었습니다');
   }, []);
 
+  const oauth2Login = useCallback(async (provider: 'GOOGLE' | 'APPLE', idToken: string) => {
+    // 소셜 로그인 처리: 백엔드 검증 → 토큰 저장 → 사용자 상태 반영
+    const res: LoginResponse = await authApi.oauth2Login({ token: idToken, providerType: provider });
+    authStorage.save({ accessToken: res.accessToken, refreshToken: res.refreshToken });
+    setUser(res.user);
+    toast.success(`${provider === 'GOOGLE' ? 'Google' : 'Apple'}로 로그인되었습니다`);
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
@@ -105,8 +114,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, isLoading, login, logout, refresh }),
-    [user, isLoading, login, logout, refresh]
+    () => ({ user, isLoading, login, logout, refresh, oauth2Login }),
+    [user, isLoading, login, logout, refresh, oauth2Login]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

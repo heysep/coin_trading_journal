@@ -19,7 +19,8 @@ export const tradesApi = {
       if (filters?.offset) params.append('offset', filters.offset.toString());
 
       const url = `/api/trades${params.toString() ? `?${params.toString()}` : ''}`;
-      const response = await apiClient.get<TradesResponse>(url);
+      // Next API 라우트는 항상 동일 오리진으로 보냄 (외부 baseURL 설정 무시)
+      const response = await apiClient.get<TradesResponse>(url, { baseURL: '' });
 
       // Date 객체로 변환
       const transformedTrades = response.data.trades.map((trade) => ({
@@ -43,7 +44,8 @@ export const tradesApi = {
   // 새 거래 등록
   createTrade: async (tradeData: CreateTradeRequest): Promise<Trade> => {
     try {
-      const response = await apiClient.post<Trade>('/api/trades', tradeData);
+      // Next API 라우트는 항상 동일 오리진으로 보냄
+      const response = await apiClient.post<Trade>('/api/trades', tradeData, { baseURL: '' });
 
       // Date 객체로 변환
       return {
@@ -62,7 +64,8 @@ export const tradesApi = {
   // 거래 수정 (향후 확장용)
   updateTrade: async (id: string, tradeData: Partial<CreateTradeRequest>): Promise<Trade> => {
     try {
-      const response = await apiClient.put<Trade>(`/api/trades/${id}`, tradeData);
+      // Next API 라우트는 항상 동일 오리진으로 보냄
+      const response = await apiClient.put<Trade>(`/api/trades/${id}`, tradeData, { baseURL: '' });
 
       return {
         ...response.data,
@@ -80,7 +83,8 @@ export const tradesApi = {
   // 거래 삭제 (향후 확장용)
   deleteTrade: async (id: string): Promise<void> => {
     try {
-      await apiClient.delete(`/api/trades/${id}`);
+      // Next API 라우트는 항상 동일 오리진으로 보냄
+      await apiClient.delete(`/api/trades/${id}`, { baseURL: '' });
     } catch (error) {
       console.error('거래 삭제 실패:', error);
       throw new Error('거래 삭제에 실패했습니다');

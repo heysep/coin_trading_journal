@@ -1,1 +1,85 @@
-// 백엔드 서브프로젝트 - 모든 설정은 루트 build.gradle에서 관리됨
+plugins {
+    // 자바 및 스프링 부트 플러그인 적용 (버전은 루트에서 관리: apply false)
+    id 'java'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+group = 'com.example.tradingbot'
+version = '1.0.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            setSrcDirs(['src/main/java'])
+        }
+        resources {
+            setSrcDirs(['src/main/resources'])
+        }
+    }
+    test {
+        java {
+            setSrcDirs(['src/test/java'])
+        }
+        resources {
+            setSrcDirs(['src/test/resources'])
+        }
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot 기본
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+    // Google OAuth2 (commons-logging 제외)
+    implementation('com.google.api-client:google-api-client:1.35.2') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
+
+    // PostgreSQL
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // H2 (local 프로파일에서 인메모리 DB 사용)
+    runtimeOnly 'com.h2database:h2'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+    // 테스트
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
