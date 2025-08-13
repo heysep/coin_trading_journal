@@ -78,4 +78,10 @@ public class User extends BaseTimeEntity {
             this.profileImageUrl = profileImageUrl;
         }
     }
+
+    // OAuth2 제공자 정보 연결 (이메일 중복 사용자 처리용)
+    public void linkProvider(ProviderType providerType, String providerId) {
+        this.providerType = providerType;
+        this.providerId = providerId;
+    }
 }

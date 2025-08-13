@@ -94,7 +94,9 @@ public class AuthService {
 
         User user = existingUser
                 .map(u -> updateOAuth2UserProfile(u, name, profileImageUrl))
-                .orElseGet(() -> createOAuth2User(email, name, profileImageUrl, providerType, providerId));
+                .orElseGet(() -> userRepository.findByEmail(email)
+                        .map(u -> linkOAuth2User(u, name, profileImageUrl, providerType, providerId))
+                        .orElseGet(() -> createOAuth2User(email, name, profileImageUrl, providerType, providerId)));
 
         return generateTokenResponse(user);
     }
@@ -139,6 +141,13 @@ public class AuthService {
 
     private User updateOAuth2UserProfile(User user, String name, String profileImageUrl) {
         user.updateProfile(name, profileImageUrl);
+        return userRepository.save(user);
+    }
+
+    private User linkOAuth2User(User user, String name, String profileImageUrl,
+                                ProviderType providerType, String providerId) {
+        user.updateProfile(name, profileImageUrl);
+        user.linkProvider(providerType, providerId);
         return userRepository.save(user);
     }
 
