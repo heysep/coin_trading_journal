@@ -1,8 +1,7 @@
 package com.example.trading_bot.auth.controller;
 
-import com.example.trading_bot.auth.dto.LoginRequest;
+import com.example.trading_bot.auth.dto.AuthRequest;
 import com.example.trading_bot.auth.dto.LoginResponse;
-import com.example.trading_bot.auth.dto.RegisterRequest;
 import com.example.trading_bot.auth.dto.TokenResponse;
 import com.example.trading_bot.auth.entity.User;
 import com.example.trading_bot.auth.service.AuthService;
@@ -22,28 +21,19 @@ public class AuthController {
 
     private final AuthService authService;
 
-    /**
-     * 일반 회원가입
-     */
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<User>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<User>> register(@Valid @RequestBody AuthRequest.SignUp request) {
         User user = authService.registerLocalUser(request.getEmail(), request.getPassword(), request.getName());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("회원가입이 완료되었습니다.", user));
     }
 
-    /**
-     * 일반 로그인
-     */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody AuthRequest.SignIn request) {
         LoginResponse response = authService.loginLocal(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(ApiResponse.success("로그인이 완료되었습니다.", response));
     }
 
-    /**
-     * 토큰 갱신
-     */
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<TokenResponse>> refreshToken(
             @RequestHeader("Authorization") String refreshToken) {
@@ -51,9 +41,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("토큰이 갱신되었습니다.", response));
     }
 
-    /**
-     * 현재 사용자 정보 조회
-     */
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<User>> getCurrentUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -61,9 +48,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("사용자 정보를 조회했습니다.", user));
     }
 
-    /**
-     * 로그아웃
-     */
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {

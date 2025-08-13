@@ -1,35 +1,51 @@
-# Auth DTO Package
+# DTO 패키지
 
-인증 관련 데이터 전송 객체들을 정의하는 패키지입니다.
+인증 관련 데이터 전송 객체(Data Transfer Object) 클래스들입니다.
 
-## Request DTOs
+## 클래스 목록
 
-### 인증 관련
-- **LoginRequest**: 로그인 요청 (이메일, 비밀번호)
-- **RegisterRequest**: 회원가입 요청 (이메일, 비밀번호, 이름 등)
-- **ChangePasswordRequest**: 비밀번호 변경 요청
-- **ForgotPasswordRequest**: 비밀번호 재설정 요청
-- **ResetPasswordRequest**: 비밀번호 재설정 확인 요청
+### AuthRequest
+**기능**: 인증 요청 DTO 모음 (내부 클래스들)
+- `SignIn` - 로그인 요청 (이메일, 비밀번호)
+- `SignUp` - 회원가입 요청 (이메일, 비밀번호, 이름)
+- `TokenRefresh` - 토큰 갱신 요청 (리프레시 토큰)
+- `SignOut` - 로그아웃 요청 (리프레시 토큰)
+- `ChangePassword` - 비밀번호 변경 요청
 
-### API 키 관련
-- **ApiKeyRequest**: API 키 등록/수정 요청
-- **ApiKeyTestRequest**: API 키 연동 테스트 요청
+### LoginRequest
+**기능**: 로그인 요청 전용 DTO
+- 이메일과 비밀번호 검증 포함
 
-### 보안 관련
-- **Enable2FARequest**: 2FA 활성화 요청
-- **Verify2FARequest**: 2FA 코드 검증 요청
+### LoginResponse
+**기능**: 로그인 성공 응답 DTO
+- 액세스 토큰, 리프레시 토큰, 사용자 정보 포함
 
-## Response DTOs
+### OAuth2LoginRequest  
+**기능**: OAuth2 로그인 요청 DTO
+- OAuth2 토큰과 제공업체 정보 포함
 
-### 인증 응답
-- **LoginResponse**: 로그인 응답 (토큰, 사용자 정보)
-- **TokenResponse**: 토큰 갱신 응답
-- **UserProfileResponse**: 사용자 프로필 응답
+### OAuth2UserInfo
+**기능**: OAuth2 사용자 정보 DTO
+- 외부 제공업체에서 받은 사용자 정보
 
-### API 키 응답
-- **ApiKeyResponse**: API 키 정보 응답
-- **ApiKeyTestResponse**: API 키 테스트 결과
+### RegisterRequest
+**기능**: 회원가입 요청 DTO
+- 이메일, 비밀번호, 이름 등 가입 정보
 
-### 보안 응답
-- **SessionResponse**: 세션 정보 응답
-- **SecuritySettingsResponse**: 보안 설정 응답
+### TokenResponse
+**기능**: 토큰 관련 응답 DTO
+- 액세스 토큰과 리프레시 토큰 정보
+
+## 검증 규칙
+
+### 이메일
+- `@Email` - 유효한 이메일 형식
+- `@NotBlank` - 필수 입력
+
+### 비밀번호
+- `@NotBlank` - 필수 입력
+- `@Size(min = 8, max = 100)` - 8자 이상 100자 이하
+
+### 이름
+- `@NotBlank` - 필수 입력
+- `@Size(min = 1, max = 100)` - 1자 이상 100자 이하

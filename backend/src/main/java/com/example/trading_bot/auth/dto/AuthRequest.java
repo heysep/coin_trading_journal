@@ -5,9 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-/**
- * 인증 요청 DTO 모음
- */
 public class AuthRequest {
 
     /**
@@ -41,34 +38,4 @@ public class AuthRequest {
         private String name;
     }
 
-    /**
-     * 토큰 갱신 요청 DTO
-     */
-    @Data
-    public static class TokenRefresh {
-        @NotBlank(message = "리프레시 토큰은 필수입니다")
-        private String refreshToken;
-    }
-
-    /**
-     * 로그아웃 요청 DTO
-     */
-    @Data
-    public static class SignOut {
-        @NotBlank(message = "리프레시 토큰은 필수입니다")
-        private String refreshToken;
-    }
-
-    /**
-     * 비밀번호 변경 요청 DTO
-     */
-    @Data
-    public static class ChangePassword {
-        @NotBlank(message = "현재 비밀번호는 필수입니다")
-        private String currentPassword;
-
-        @NotBlank(message = "새 비밀번호는 필수입니다")
-        @Size(min = 8, max = 100, message = "비밀번호는 8자 이상 100자 이하여야 합니다")
-        private String newPassword;
-    }
 }

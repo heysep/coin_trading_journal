@@ -7,6 +7,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 사용자 엔티티 클래스
+ * - 일반 로그인 및 OAuth2 소셜 로그인 사용자 모두 지원
+ * - JWT 인증용 리프레시 토큰 관리
+ */
 @Entity
 @Table(name = "users")
 @Getter
@@ -21,7 +26,7 @@ public class User extends BaseTimeEntity {
     private String email;
 
     @Column(length = 255)
-    private String password;
+    private String password; // 일반 회원가입용, OAuth2 사용자는 null
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -31,10 +36,10 @@ public class User extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "provider_type", nullable = false)
-    private ProviderType providerType;
+    private ProviderType providerType; // LOCAL, GOOGLE, GITHUB 등
 
     @Column(name = "provider_id")
-    private String providerId;
+    private String providerId; // OAuth2 provider에서 제공하는 사용자 ID
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -44,7 +49,7 @@ public class User extends BaseTimeEntity {
     private Boolean isActive;
 
     @Column(name = "refresh_token", length = 500)
-    private String refreshToken;
+    private String refreshToken; // JWT 토큰 갱신용
 
     @Builder
     public User(String email, String password, String name, String profileImageUrl,
@@ -59,10 +64,12 @@ public class User extends BaseTimeEntity {
         this.isActive = isActive;
     }
 
+    // 리프레시 토큰 설정 (로그인/로그아웃 시 사용)
     public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
     }
 
+    // 프로필 정보 업데이트 (OAuth2 재로그인 시 사용)
     public void updateProfile(String name, String profileImageUrl) {
         if (name != null && !name.equals(this.name)) {
             this.name = name;

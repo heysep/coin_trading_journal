@@ -9,9 +9,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
-/**
- * JWT 토큰 생성 및 검증 전담 클래스
- */
 @Slf4j
 @Component
 public class JwtTokenProvider {
@@ -30,9 +27,6 @@ public class JwtTokenProvider {
         this.refreshTokenValidityInMilliseconds = refreshTokenValidityInSeconds * 1000;
     }
 
-    /**
-     * Access Token 생성
-     */
     public String createAccessToken(Long userId, String email, String role) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
@@ -43,13 +37,10 @@ public class JwtTokenProvider {
                 .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(validity)
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(key)
                 .compact();
     }
 
-    /**
-     * Refresh Token 생성
-     */
     public String createRefreshToken(Long userId) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
@@ -58,58 +49,17 @@ public class JwtTokenProvider {
                 .setSubject(userId.toString())
                 .setIssuedAt(now)
                 .setExpiration(validity)
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(key)
                 .compact();
     }
 
-    /**
-     * 토큰에서 사용자 ID 추출
-     */
     public Long getUserIdFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return Long.valueOf(claims.getSubject());
+        return Long.valueOf(getClaimsFromToken(token).getSubject());
     }
 
-    /**
-     * 토큰에서 이메일 추출
-     */
-    public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return claims.get("email", String.class);
-    }
-
-    /**
-     * 토큰에서 역할 추출
-     */
-    public String getRoleFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return claims.get("role", String.class);
-    }
-
-    /**
-     * 토큰 유효성 검사
-     */
     public boolean validateToken(String token) {
         try {
-            Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(token);
+            getClaimsFromToken(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             log.error("Invalid JWT token: {}", e.getMessage());
@@ -117,24 +67,11 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * 토큰 만료 시간 확인
-     */
-    public Date getExpirationDateFromToken(String token) {
-        Claims claims = Jwts.parser()
+    private Claims getClaimsFromToken(String token) {
+        return Jwts.parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-
-        return claims.getExpiration();
-    }
-
-    /**
-     * 토큰 만료 여부 확인
-     */
-    public boolean isTokenExpired(String token) {
-        Date expiration = getExpirationDateFromToken(token);
-        return expiration.before(new Date());
     }
 }

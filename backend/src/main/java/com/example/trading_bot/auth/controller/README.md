@@ -1,29 +1,53 @@
-# Auth Controller Package
+# Controller 패키지
 
-사용자 인증 및 권한 관리 관련 REST API 컨트롤러를 담당하는 패키지입니다.
+인증 관련 REST API 엔드포인트를 제공하는 컨트롤러 클래스들입니다.
 
-## 주요 컨트롤러 클래스
+## 클래스 목록
 
 ### AuthController
-- **POST** `/api/auth/login`: 사용자 로그인
-- **POST** `/api/auth/logout`: 사용자 로그아웃
-- **POST** `/api/auth/refresh`: 토큰 갱신
-- **POST** `/api/auth/forgot-password`: 비밀번호 재설정 요청
+**기능**: 일반 인증 API 엔드포인트
+- `POST /auth/signup` - 회원가입
+- `POST /auth/signin` - 로그인
+- `POST /auth/refresh` - 토큰 갱신
+- `POST /auth/logout` - 로그아웃
+- `GET /auth/me` - 내 정보 조회
 
-### UserController
-- **POST** `/api/users/register`: 사용자 회원가입
-- **GET** `/api/users/profile`: 사용자 프로필 조회
-- **PUT** `/api/users/profile`: 사용자 프로필 수정
-- **POST** `/api/users/change-password`: 비밀번호 변경
+### OAuth2Controller  
+**기능**: OAuth2 소셜 로그인 API 엔드포인트
+- `POST /oauth2/login` - OAuth2 로그인 (구글, 애플)
 
-### ApiKeyController
-- **GET** `/api/users/api-keys`: 거래소 API 키 목록 조회
-- **POST** `/api/users/api-keys`: 거래소 API 키 등록
-- **PUT** `/api/users/api-keys/{id}`: API 키 수정
-- **DELETE** `/api/users/api-keys/{id}`: API 키 삭제
+## 공통 응답 형식
 
-### SecurityController
-- **POST** `/api/security/2fa/enable`: 2단계 인증 활성화
-- **POST** `/api/security/2fa/verify`: 2FA 코드 검증
-- **GET** `/api/security/sessions`: 활성 세션 조회
-- **DELETE** `/api/security/sessions/{id}`: 세션 종료
+### 성공 응답
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": 1,
+      "email": "user@example.com",
+      "name": "사용자"
+    }
+  }
+}
+```
+
+### 오류 응답
+```json
+{
+  "success": false,
+  "error": {
+    "code": "AUTH_FAILED",
+    "message": "인증에 실패했습니다."
+  }
+}
+```
+
+## 인증 헤더
+
+API 호출 시 Authorization 헤더에 Bearer 토큰을 포함해야 합니다:
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```

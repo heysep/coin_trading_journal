@@ -1,39 +1,49 @@
-# Auth Repository Package
+# Repository 패키지
 
-인증 관련 데이터 액세스 레이어를 담당하는 리포지토리 인터페이스들을 정의하는 패키지입니다.
+사용자 인증 관련 데이터 액세스 레이어입니다.
 
-## 주요 리포지토리 인터페이스
+## 클래스 목록
 
 ### UserRepository
-- **findByEmail()**: 이메일로 사용자 조회
-- **findByEmailAndIsActiveTrue()**: 활성화된 사용자 조회
-- **existsByEmail()**: 이메일 존재 여부 확인
-- **findUsersWithExpiredSessions()**: 만료된 세션을 가진 사용자 조회
-- **countActiveUsers()**: 활성 사용자 수 조회
+**기능**: 사용자 엔티티 데이터 액세스
+- Spring Data JPA 기반 리포지토리
+- 사용자 조회, 저장, 수정, 삭제 기능
 
-### RoleRepository
-- **findByName()**: 권한 이름으로 조회
-- **findAllByOrderByNameAsc()**: 권한 목록 정렬 조회
+## 주요 메서드
 
-### UserApiKeyRepository
-- **findByUserIdAndExchangeName()**: 사용자별 거래소 API 키 조회
-- **findByUserIdAndIsActiveTrue()**: 활성화된 API 키 목록
-- **countByUserIdAndIsActiveTrue()**: 사용자별 활성 API 키 수
-- **findByApiKeyHash()**: API 키 해시로 조회
+### 기본 조회
+- `findById(Long id)` - ID로 사용자 조회
+- `findByEmail(String email)` - 이메일로 사용자 조회
+- `existsByEmail(String email)` - 이메일 존재 여부 확인
 
-### UserSessionRepository
-- **findBySessionToken()**: 세션 토큰으로 조회
-- **findByUserIdAndIsActiveTrue()**: 사용자 활성 세션 목록
-- **deleteExpiredSessions()**: 만료된 세션 삭제
-- **countActiveSessionsByUserId()**: 사용자별 활성 세션 수
+### OAuth2 관련
+- `findByProviderTypeAndProviderId(ProviderType, String)` - OAuth2 사용자 조회
+- `findByRefreshToken(String refreshToken)` - 리프레시 토큰으로 사용자 조회
 
-### SecuritySettingsRepository
-- **findByUserId()**: 사용자별 보안 설정 조회
-- **findUsersWithEnable2FA()**: 2FA 활성화 사용자 조회
+### 활성 사용자 관리
+- `findByIsActiveTrue()` - 활성 사용자 목록 조회
+- `countByIsActiveTrue()` - 활성 사용자 수 조회
 
-## Custom Query Methods
+## 사용 예시
 
-### 복합 조건 조회
-- **findUsersByRoleAndStatus()**: 권한 및 상태별 사용자 조회
-- **findApiKeysByExchangeAndPermission()**: 거래소 및 권한별 API 키 조회
-- **findSessionsByIpAndTimeRange()**: IP 및 시간 범위별 세션 조회
+```java
+@Service
+public class AuthService {
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+    }
+}
+```
+
+## 인덱스 권장사항
+
+성능 최적화를 위해 다음 컬럼에 인덱스 생성 권장:
+- `email` (고유 인덱스)
+- `provider_type, provider_id` (복합 인덱스)
+- `refresh_token` (인덱스)
+- `is_active` (인덱스)
