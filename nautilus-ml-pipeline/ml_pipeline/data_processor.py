@@ -30,6 +30,9 @@ class BacktestDataProcessor:
         
         self.feature_columns = self.config['data']['features']
         self.target_column = self.config['data']['target']
+        self.default_values = self.config['data'].get('default_values', {})
+        self.missing_value_strategy = self.config['data'].get('missing_value_strategy', 'drop')
+        self.halt_on_missing = self.config['data'].get('halt_on_missing_features', False)
         
     def process_backtest_results(self, backtest_file: str) -> pd.DataFrame:
         """
@@ -105,23 +108,23 @@ class BacktestDataProcessor:
             df['day_of_week'] = df['timestamp'].dt.dayofweek
             df['is_weekend'] = (df['day_of_week'] >= 5).astype(int)
         else:
-            df['hour_of_day'] = 12
-            df['day_of_week'] = 1
-            df['is_weekend'] = 0
+            df['hour_of_day'] = self._get_default_value('hour_of_day')
+            df['day_of_week'] = self._get_default_value('day_of_week')
+            df['is_weekend'] = self._get_default_value('is_weekend')
         
         # 한글 주석: 변동성 피처 (가격 변동 기반)
         if 'entry_price' in df.columns and 'exit_price' in df.columns:
             df['price_change_pct'] = ((df['exit_price'] - df['entry_price']) / df['entry_price']) * 100
             df['volatility'] = df['price_change_pct'].abs()
         else:
-            df['volatility'] = 2.5  # 기본값
+            df['volatility'] = self._get_default_value('volatility')
         
         # 한글 주석: 시장 조건 (단순화)
         df['market_condition'] = self._classify_market_condition(df)
         
         # 한글 주석: 볼륨 프로파일 (랜덤 제거, 결정적 기본값 사용)
         if 'volume_profile' not in df.columns:
-            df['volume_profile'] = 1.0
+            df['volume_profile'] = self._get_default_value('volume_profile')
         
         return df
     
@@ -159,8 +162,11 @@ class BacktestDataProcessor:
                 missing_features.append(feature)
         
         if missing_features:
-            logger.warning(f"누락된 피처: {missing_features}")
-            # 한글 주석: 누락된 피처를 기본값으로 채움
+            message = f"누락된 피처: {missing_features}"
+            if self.halt_on_missing:
+                logger.error(message)
+                raise ValueError(message)
+            logger.warning(message)
             for feature in missing_features:
                 df[feature] = self._get_default_value(feature)
         
@@ -179,6 +185,15 @@ class BacktestDataProcessor:
                 pass
         
         # 한글 주석: 결측값 처리
+        for feature in self.feature_columns:
+            if feature in df.columns and df[feature].isna().any():
+                missing_count = df[feature].isna().sum()
+                logger.warning(f"결측값 발견 - {feature}: {missing_count}건")
+                if self.missing_value_strategy == 'drop':
+                    df = df.dropna(subset=[feature])
+                elif self.missing_value_strategy == 'default':
+                    df[feature] = df[feature].fillna(self._get_default_value(feature))
+
         df = df.dropna(subset=[self.target_column])
         
         # 한글 주석: 무한값 제거
@@ -188,16 +203,7 @@ class BacktestDataProcessor:
     
     def _get_default_value(self, feature: str) -> float:
         """피처별 기본값 반환"""
-        defaults = {
-            'entry_timing_score': 75.0,
-            'exit_timing_score': 70.0,
-            'risk_mgmt_score': 80.0,
-            'pnl_ratio': 0.0,
-            'volatility': 2.0,
-            'market_condition': 1,
-            'volume_profile': 1.0
-        }
-        return defaults.get(feature, 0.0)
+        return self.default_values.get(feature, 0.0)
     
     def save_training_data(self, df: pd.DataFrame, output_path: str):
         """훈련 데이터 저장"""

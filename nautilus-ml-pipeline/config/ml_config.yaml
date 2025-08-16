@@ -8,6 +8,19 @@ data:
     - market_condition
     - volume_profile
   target: return_pct
+  missing_value_strategy: drop
+  halt_on_missing_features: false
+  default_values:
+    hour_of_day: 12
+    day_of_week: 3
+    is_weekend: 0
+    volatility: 1.5
+    volume_profile: 1.0
+    entry_timing_score: 75.0
+    exit_timing_score: 70.0
+    risk_mgmt_score: 80.0
+    pnl_ratio: 0.0
+    market_condition: 1
   validation:
     min_train_size: 100
     test_size: 0.2
